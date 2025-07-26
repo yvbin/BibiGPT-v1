@@ -7,6 +7,7 @@ export type SummarizeParams = {
 export type UserConfig = {
   userKey?: string
   shouldShowTimestamp?: boolean
+  aiService?: AIService
 }
 export type VideoConfig = {
   videoId: string
@@ -22,6 +23,11 @@ export enum VideoService {
   Meeting = 'meeting',
   LocalVideo = 'local-video',
   LocalAudio = 'local-audio',
+}
+
+export enum AIService {
+  OpenAI = 'openai',
+  Gemini = 'gemini',
 }
 
 export type CommonSubtitleItem = {

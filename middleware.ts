@@ -6,6 +6,7 @@ import { SummarizeParams } from '~/lib/types'
 import { getCacheId } from '~/utils/getCacheId'
 import { validateLicenseKey } from './lib/lemon'
 import { checkOpenaiApiKeys } from './lib/openai/checkOpenaiApiKey'
+import { checkGeminiApiKeys } from './lib/gemini/checkGeminiApiKey'
 import { ratelimitForApiKeyIps, ratelimitForFreeAccounts, ratelimitForIps } from './lib/upstash'
 import { isDev } from './utils/env'
 
@@ -46,7 +47,7 @@ export async function middleware(req: NextRequest, context: NextFetchEvent) {
 
     // licenseKeys
     if (userKey) {
-      if (checkOpenaiApiKeys(userKey)) {
+      if (checkOpenaiApiKeys(userKey) || checkGeminiApiKeys(userKey)) {
         const { success, remaining } = await ratelimitForApiKeyIps.limit(ipIdentifier)
         console.log(`use user apiKey ${ipIdentifier}, remaining: ${remaining}`)
         if (!success) {

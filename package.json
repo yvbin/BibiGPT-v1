@@ -5,7 +5,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test:gemini": "node test-gemini.js"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"

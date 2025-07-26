@@ -9,6 +9,7 @@ export const videoConfigSchema = z.object({
   detailLevel: z.number().optional(),
   sentenceNumber: z.number().optional(),
   outlineLevel: z.number().optional(),
+  aiService: z.enum(['openai', 'gemini']).optional(),
 })
 
 export type VideoConfigSchema = z.infer<typeof videoConfigSchema>

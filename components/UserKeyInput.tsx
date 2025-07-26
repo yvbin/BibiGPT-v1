@@ -46,7 +46,9 @@ export function UserKeyInput(props: { value: string | undefined; onChange: (e: a
           value={props.value}
           onChange={props.onChange}
           className="mx-auto my-4 w-full appearance-none rounded-lg rounded-md border bg-transparent py-2 pl-2 text-sm leading-6 text-slate-900 shadow-sm ring-1 ring-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder={'填你的 OpenAI API Key: sk-xxxxxx 或者购买的 License Key: xxx-CCDE-xxx'}
+          placeholder={
+            '填你的 OpenAI API Key: sk-xxxxxx 或 Gemini API Key: AIxxxxx 或者购买的 License Key: xxx-CCDE-xxx'
+          }
         />
         <div className="relin-paragraph-target mt-1 text-base text-slate-500">
           <div>
@@ -55,7 +57,7 @@ export function UserKeyInput(props: { value: string | undefined; onChange: (e: a
               href={CHECKOUT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 mb-6 pl-2 font-semibold text-sky-500 dark:text-sky-400"
+              className="mb-6 mt-4 pl-2 font-semibold text-sky-500 dark:text-sky-400"
             >
               https://shop.jimmylv.cn
             </a>

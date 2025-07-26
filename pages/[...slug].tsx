@@ -14,10 +14,11 @@ import { TypingSlogan } from '~/components/TypingSlogan'
 import { UsageAction } from '~/components/UsageAction'
 import { UsageDescription } from '~/components/UsageDescription'
 import { UserKeyInput } from '~/components/UserKeyInput'
+import { AIServiceSelector } from '~/components/AIServiceSelector'
 import { useToast } from '~/hooks/use-toast'
 import { useLocalStorage } from '~/hooks/useLocalStorage'
 import { useSummarize } from '~/hooks/useSummarize'
-import { VideoService } from '~/lib/types'
+import { VideoService, AIService } from '~/lib/types'
 import { DEFAULT_LANGUAGE } from '~/utils/constants/language'
 import { extractPage, extractUrl } from '~/utils/extractUrl'
 import { getVideoIdFromUrl } from '~/utils/getVideoIdFromUrl'
@@ -57,6 +58,7 @@ export const Home: NextPage<{
   const [currentVideoId, setCurrentVideoId] = useState<string>('')
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('')
   const [userKey, setUserKey] = useLocalStorage<string>('user-openai-apikey')
+  const [aiService, setAiService] = useLocalStorage<AIService>('ai-service', AIService.OpenAI)
   const { loading, summary, resetSummary, summarize } = useSummarize(showSingIn, getValues('enableStream'))
   const { toast } = useToast()
   const { analytics } = useAnalytics()
@@ -123,7 +125,7 @@ export const Home: NextPage<{
       setCurrentVideoId(id)
       await summarize(
         { videoId: id, service: VideoService.Youtube, ...formValues },
-        { userKey, shouldShowTimestamp: shouldShowTimestamp },
+        { userKey, shouldShowTimestamp: shouldShowTimestamp, aiService },
       )
       return
     }
@@ -137,7 +139,7 @@ export const Home: NextPage<{
     setCurrentVideoId(videoId)
     await summarize(
       { service: VideoService.Bilibili, videoId, pageNumber, ...formValues },
-      { userKey, shouldShowTimestamp },
+      { userKey, shouldShowTimestamp, aiService },
     )
     setTimeout(() => {
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
@@ -173,6 +175,7 @@ export const Home: NextPage<{
       <TypingSlogan />
       <UsageAction />
       <UserKeyInput value={userKey} onChange={handleApiKeyChange} />
+      <AIServiceSelector value={aiService} onChange={setAiService} />
       <form onSubmit={handleSubmit(onFormSubmit)} className="grid place-items-center">
         <input
           type="text"

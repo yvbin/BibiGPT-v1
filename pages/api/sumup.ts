@@ -5,6 +5,9 @@ import { ChatGPTAgent, fetchOpenAIResult } from '~/lib/openai/fetchOpenAIResult'
 import { getSmallSizeTranscripts } from '~/lib/openai/getSmallSizeTranscripts'
 import { getUserSubtitlePrompt, getUserSubtitleWithTimestampPrompt } from '~/lib/openai/prompt'
 import { selectApiKeyAndActivatedLicenseKey } from '~/lib/openai/selectApiKeyAndActivatedLicenseKey'
+import { fetchGeminiResult } from '~/lib/gemini/fetchGeminiResult'
+import { selectGeminiApiKey } from '~/lib/gemini/selectGeminiApiKey'
+import { AIService } from '~/lib/types'
 import { SummarizeParams } from '~/lib/types'
 import { isDev } from '~/utils/env'
 
@@ -12,13 +15,13 @@ export const config = {
   runtime: 'edge',
 }
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('Missing env var from OpenAI')
+if (!process.env.OPENAI_API_KEY && !process.env.GEMINI_API_KEY) {
+  throw new Error('Missing env var from OpenAI or Gemini')
 }
 
 export default async function handler(req: NextRequest, context: NextFetchEvent) {
   const { videoConfig, userConfig } = (await req.json()) as SummarizeParams
-  const { userKey, shouldShowTimestamp } = userConfig
+  const { userKey, shouldShowTimestamp, aiService = AIService.OpenAI } = userConfig
   const { videoId } = videoConfig
 
   if (!videoId) {
@@ -47,31 +50,59 @@ export default async function handler(req: NextRequest, context: NextFetchEvent)
 
   try {
     const stream = true
-    const openAiPayload = {
-      model: 'gpt-3.5-turbo',
-      messages: [
-        // { role: ChatGPTAgent.system, content: systemPrompt },
-        // { role: ChatGPTAgent.user, content: examplePrompt.input },
-        // { role: ChatGPTAgent.assistant, content: examplePrompt.output },
-        { role: ChatGPTAgent.user, content: userPrompt },
-      ],
-      // temperature: 0.5,
-      // top_p: 1,
-      // frequency_penalty: 0,
-      // presence_penalty: 0,
-      max_tokens: Number(videoConfig.detailLevel) || (userKey ? 800 : 600),
-      stream,
-      // n: 1,
-    }
+    const maxTokens = Number(videoConfig.detailLevel) || (userKey ? 800 : 600)
 
-    // TODO: need refactor
-    const openaiApiKey = await selectApiKeyAndActivatedLicenseKey(userKey, videoId)
-    const result = await fetchOpenAIResult(openAiPayload, openaiApiKey, videoConfig)
-    if (stream) {
-      return new Response(result)
-    }
+    if (aiService === AIService.Gemini) {
+      const geminiPayload = {
+        model: 'gemini-1.5-flash',
+        contents: [
+          {
+            role: 'user' as const,
+            parts: [{ text: userPrompt }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: maxTokens,
+          temperature: 0.7,
+        },
+        // Remove stream field as it's not supported in Gemini API
+      }
 
-    return NextResponse.json(result)
+      const geminiApiKey = await selectGeminiApiKey(userKey)
+      const result = await fetchGeminiResult(geminiPayload, geminiApiKey, videoConfig)
+      if (stream) {
+        return new Response(result)
+      }
+
+      return NextResponse.json(result)
+    } else {
+      // OpenAI
+      const openAiPayload = {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          // { role: ChatGPTAgent.system, content: systemPrompt },
+          // { role: ChatGPTAgent.user, content: examplePrompt.input },
+          // { role: ChatGPTAgent.assistant, content: examplePrompt.output },
+          { role: ChatGPTAgent.user, content: userPrompt },
+        ],
+        // temperature: 0.5,
+        // top_p: 1,
+        // frequency_penalty: 0,
+        // presence_penalty: 0,
+        max_tokens: maxTokens,
+        stream,
+        // n: 1,
+      }
+
+      // TODO: need refactor
+      const openaiApiKey = await selectApiKeyAndActivatedLicenseKey(userKey, videoId)
+      const result = await fetchOpenAIResult(openAiPayload, openaiApiKey, videoConfig)
+      if (stream) {
+        return new Response(result)
+      }
+
+      return NextResponse.json(result)
+    }
   } catch (error: any) {
     console.error(error.message)
     return new Response(
